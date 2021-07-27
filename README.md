@@ -171,9 +171,11 @@ simple command:
 
 `libfuzzer-dotnet.exe \path\to\HarnessExecutable.exe`
 
-Additional libfuzzer options can be used from this executable, such as specifying the number 
+Additional libFuzzer options can be used from this executable, such as specifying the number 
 of consecutive jobs to be run, maximum input size, or seed inputs to use. More information 
-on these options can be found [here](https://llvm.org/docs/LibFuzzer.html#options).
+on these options can be found [here](https://llvm.org/docs/LibFuzzer.html#options). It should 
+be noted that some of the memory options (such as `-malloc_limit_mb`) will not be useful 
+because of the independant way in which the libfuzzer and .NET executables operate.
 
 
 
