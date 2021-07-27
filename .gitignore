@@ -14,6 +14,7 @@ src/WinSharpFuzz.Common/[Oo]bj/
 libfuzzer-dotnet/libfuzzer-dotnet.dll
 libfuzzer-dotnet/libfuzzer-dotnet.exe
 libfuzzer-dotnet/libfuzzer-dotnet.exp
+libfuzzer-dotnet/libfuzzer-dotnet.lib
 libfuzzer-dotnet/libfuzzer-dotnet.pdb
 
 # BenchmarkDotNet
