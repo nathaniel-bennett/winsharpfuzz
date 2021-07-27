@@ -48,12 +48,11 @@ namespace WinSharpFuzz
 				using (var src = ModuleDefMD.Load(source))
 				{
 					// Newer versions of dnlib are capable of instrumenting mixed-mode assemblies
-					/*
+					// But since we currently have segfault issues with mixed-mode instrumenting, we'll leave this in for the moment
 					if (!src.IsILOnly)
 					{
 						throw new InstrumentationException("Cannot instrument mixed-mode assemblies.");
 					}
-					*/
 
 					if (src.TypeExistsNormal(typeof(Common.Trace).FullName))
 					{
