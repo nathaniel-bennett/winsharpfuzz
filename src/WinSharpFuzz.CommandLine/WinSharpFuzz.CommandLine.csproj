@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\build\Common.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>sharpfuzz</ToolCommandName>
+    <PackageId>WinSharpFuzz.CommandLine</PackageId>
+    <Title>WinSharpFuzz.CommandLine</Title>
+    <PackageVersion>1.6.3</PackageVersion>
+    <AssemblyVersion>1.6.3.0</AssemblyVersion>
+    <Description>Command line tool for SharpFuzz instrumentation</Description>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\build\WinSharpFuzz.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WinSharpFuzz\WinSharpFuzz.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,21 @@
+# Visual Studio/Code
+.vs
+.vscode
+
+# Build results
+[Bb]in/
+[Oo]bj/
+src/WinSharpFuzz/[Bb]in/
+src/WinSharpFuzz/[Oo]bj/
+src/WinSharpFuzz.CommandLine/[Bb]in/
+src/WinSharpFuzz.CommandLine/[Oo]bj/
+src/WinSharpFuzz.Common/[Bb]in/
+src/WinSharpFuzz.Common/[Oo]bj/
+libfuzzer-dotnet/libfuzzer-dotnet.dll
+libfuzzer-dotnet/libfuzzer-dotnet.exe
+libfuzzer-dotnet/libfuzzer-dotnet.exp
+libfuzzer-dotnet/libfuzzer-dotnet.pdb
+
+# BenchmarkDotNet
+**/BenchmarkDotNet.Artifacts/*
+

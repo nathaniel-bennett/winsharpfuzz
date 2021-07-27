@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\build\WinSharpFuzz.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+ 
+ <!--
+  <PropertyGroup>
+    <Authors>Nemanja Mijailovic</Authors>
+    <RepositoryUrl>https://github.com/Metalnem/sharpfuzz.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © 2018-2019, Nemanja Mijailovic</Copyright>
+    <PackageTags>fuzzing testing fuzz-testing fuzzer afl afl-fuzz libfuzzer</PackageTags>
+  </PropertyGroup>
+  -->
+</Project>
