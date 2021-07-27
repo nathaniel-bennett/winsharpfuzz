@@ -135,7 +135,7 @@ they report are taken care of by WinSharpFuzz. The `WinSharpFuzz.CommandLine.exe
 executable can be used to instrument dll files in place, while the `WinSharpFuzz` and 
 `WinSharpFuzz.Common` libraries handle the information provided by this instrumentation.
 
-To instrument a dll file, simply execute the following:
+To instrument a dll file, simply execute the following command:
 
 `WinSharpFuzz.CommandLine.exe \path\to\library.dll`
 
@@ -144,12 +144,12 @@ and change \path\to\library.dll to the path of the library you want to instrumen
 
 You only need to instrument each library once. If you have multiple other libraries that 
 the target library depends on, you can choose whether you want to instrument those or 
-not--but note that classes and methods from uninstrumented libraries won't give any
+not--but remember that classes and methods from uninstrumented libraries won't give any
 control flow feedback to the fuzzer.
 
 #### Building the Test Executable
 
-The harness is written up, the next step is to add the necessary libraries and build the 
+Once the harness is written up, the next step is to add the necessary libraries and build the 
 project. The `WinSharpFuzz.dll` and `WinSharpFuzz.Common.dll` are both needed in order to 
 include WinSharpFuzz in the project, so make sure to add both of those. They can be found 
 in `src/WinSharpFuzz/WinSharpFuzz/bin/Debug/netstandard2.0/*.dll`.
@@ -169,12 +169,15 @@ to pass fuzzing inputs to the C# executable, which in turn passes back control f
 information to the C++ binary. With this setup, fuzzing can be performed using the 
 simple command:
 
-`libfuzzer-dotnet.exe \path\to\HarnessExecutable.exe`
+`libfuzzer-dotnet.exe --target_path="\path\to\HarnessExecutable.exe" "\path\to\corpus"`
+
+`"\path\to\corpus"` is optional; if specified, it should be a directory containing example inputs 
+for the fuzzer to go off of. These inputs can be a mixture of valid and invalid cases.
 
 Additional libFuzzer options can be used from this executable, such as specifying the number 
-of consecutive jobs to be run, maximum input size, or seed inputs to use. More information 
-on these options can be found [here](https://llvm.org/docs/LibFuzzer.html#options). It should 
-be noted that some of the memory options (such as `-malloc_limit_mb`) will not be useful 
+of consecutive jobs to be run or maximum input size. More information on these options can 
+be found [here](https://llvm.org/docs/LibFuzzer.html#options). It should be noted that 
+some of the memory options (such as `-malloc_limit_mb`) will not be useful 
 because of the independant way in which the libfuzzer and .NET executables operate.
 
 
