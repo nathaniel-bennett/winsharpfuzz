@@ -12,7 +12,7 @@
 #include <string>
 
 #define NOMINMAX
-#define WIN32_NO_STATUS // We need these or ntstatus.h makes a fuss...
+#define WIN32_NO_STATUS // We need these or ntstatus.h makes a fuss
 #include <windows.h>
 #undef WIN32_NO_STATUS
 
@@ -87,27 +87,20 @@ static std::string read_flag_value(const char *param, const char *name)
 // line argument that can be passed to .NET executable) from the command line parameters.
 static void parse_flags(int argc, char **argv)
 {
-	// printf("Entered parse_flags...\n");
-
-	// printf("%d flag(s) detected.\n", argc-1);
 	for (int i = 1; i < argc; ++i)
 	{
 		char *param = argv[i];
 
 		if (target_path.empty())
 		{
-			// printf("target_path empty--reading flag to target_path\n");
 			target_path = read_flag_value(param, target_path_name);
 		}
 
 		if (target_arg.empty())
 		{
-			// printf("target_arg empty--reading flag to target_arg\n");
 			target_arg = read_flag_value(param, target_arg_name);
 		}
 	}
-
-	// printf("Exiting parse_flags...\n");
 }
 
 static unsigned long generateRandNum()
@@ -172,7 +165,6 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 		nullptr,
 		TRUE,
 	};
-
 	
 	std::string randomPipeId = std::to_string(localEnvId);
 
@@ -224,12 +216,12 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 	}
 
 	hMapFile = CreateFileMapping(
-					INVALID_HANDLE_VALUE,	// use paging file
-					&securityAttrs,			// default security
-					PAGE_READWRITE,			// r/w access
-					0,						// max object size (high-order)
-					MAP_SIZE + DATA_SIZE,	// max object size (low-order)
-					(LPCTSTR) SZ_NAME.c_str());			// name of mapping obj
+					INVALID_HANDLE_VALUE,		// use paging file
+					&securityAttrs,				// default security
+					PAGE_READWRITE,				// r/w access
+					0,							// max object size (high-order)
+					MAP_SIZE + DATA_SIZE,		// max object size (low-order)
+					(LPCTSTR) SZ_NAME.c_str());	// name of mapping obj
 
 	if (hMapFile == INVALID_HANDLE_VALUE) {
 		die_sys("Could not create file mapping object");
@@ -263,10 +255,10 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 							nullptr,
 							TRUE,
 							0,
-							nullptr, // lpEnvironment--env variables
 							nullptr,
-							&startupInfo, // lpStartupInfo--might need to be non-null
-							&processInfo); // lpProcessInformation--might need to be non-null
+							nullptr,
+							&startupInfo,
+							&processInfo);
 
 	if (processResult == FALSE) {
 		die_sys("CreateProcessA failed");
@@ -320,33 +312,36 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
 	DWORD bytesWritten = 0;
 	BOOL writeResult = WriteFile(ctlPipe, &size, LEN_FLD_SIZE, &bytesWritten, nullptr);
-	if (writeResult == FALSE) {
+	if (writeResult == FALSE) 
+	{
 		die_sys("WriteFile() failed for ctl pipe");
 	}
 
-	if (bytesWritten != LEN_FLD_SIZE) {
+	if (bytesWritten != LEN_FLD_SIZE) 
+	{
 		die("short write: expected 4 bytes, got less than that for ctl pipe");
 	}
-
 
 	int32_t status;
 	DWORD bytesRead = 0;
 
 	BOOL readResult = ReadFile(stPipe, &status, LEN_FLD_SIZE, &bytesRead, nullptr);
-
-	memcpy(extra_counters, trace_bits, MAP_SIZE);
-
-	if (readResult == FALSE) {
+	if (readResult == FALSE) 
+	{
 		die_sys("ReadFile() failed for st pipe");
 	}
 
-	if (bytesRead == 0) {
+	if (bytesRead == 0) 
+	{
 		die("The child process terminated unexpectedly.");
 	}
 
-	if (bytesRead != LEN_FLD_SIZE) {
+	if (bytesRead != LEN_FLD_SIZE) 
+	{
 		die("short read: expected 4 bytes, got less");
 	}
+
+	memcpy(extra_counters, trace_bits, MAP_SIZE);
 
 	if (status) {
 		__builtin_trap();

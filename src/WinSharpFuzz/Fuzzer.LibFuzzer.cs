@@ -67,12 +67,8 @@ namespace WinSharpFuzz
 					return;
 				}
 
-				// Retrieve the names of the named pipes we set in our .cc program
 				var readPipeName = Environment.GetEnvironmentVariable("__LIBFUZZER_CTL_PIPE");
 				var writePipeName = Environment.GetEnvironmentVariable("__LIBFUZZER_ST_PIPE");
-
-				// Console.WriteLine("CTL pipe name (.NET side): " + readPipeName);
-				// Console.WriteLine("ST pipe name (.NET side): " + writePipeName);
 
 				if (readPipeName is null || writePipeName is null)
 				{
@@ -84,20 +80,15 @@ namespace WinSharpFuzz
 				using (var readPipe = new NamedPipeClientStream(".", readPipeName, PipeDirection.In))
 				using (var writePipe = new NamedPipeClientStream(".", writePipeName, PipeDirection.Out))
 				{
-					// Console.WriteLine("Connecting to st pipe (.NET side)...");
 					writePipe.Connect();
-					// Console.WriteLine("Connected to st pipe (.NET side).");
-
-					// Console.WriteLine("Connecting to ctl pipe (.NET side)...");
 					readPipe.Connect();
-					// Console.WriteLine("Connected to ctl pipe (.NET side).");
 
 					using (var r = new BinaryReader(readPipe))
 					using (var w = new BinaryWriter(writePipe))
 					{
 						var viewAccessor = mappedFile.CreateViewAccessor(0, MapSize + DefaultBufferSize, MemoryMappedFileAccess.ReadWrite);
 						var sharedMem = (byte*) viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
-						// var sharedMem = (byte*) mappedFile.SafeMemoryMappedFileHandle.DangerousGetHandle();
+						
 						var trace = new TraceWrapper(sharedMem);
 
 						w.Write(0);
