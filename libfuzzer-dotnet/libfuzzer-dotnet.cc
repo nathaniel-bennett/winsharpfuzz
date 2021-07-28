@@ -6,18 +6,18 @@
 
 #pragma comment(lib, "bcrypt.lib")
 
+#include <ctime>
+#include <limits>
+#include <mutex>
+#include <string>
+
 #define NOMINMAX
 #define WIN32_NO_STATUS // We need these or ntstatus.h makes a fuss...
 #include <windows.h>
 #undef WIN32_NO_STATUS
+
 #include <bcrypt.h>
 #include <ntstatus.h>
-
-
-#include <string>
-#include <ctime>
-#include <mutex>
-#include <limits>
 
 #define MAP_SIZE (1 << 16)
 #define DATA_SIZE (1 << 24)
@@ -35,11 +35,11 @@ static const char *target_arg_name = "--target_arg";
 static std::string target_path;
 static std::string target_arg;
 
-static HANDLE ctlPipe;
-static HANDLE stPipe;
+static HANDLE ctlPipe = INVALID_HANDLE_VALUE;
+static HANDLE stPipe = INVALID_HANDLE_VALUE;
 
-static uint8_t *trace_bits;
-static HANDLE hMapFile;
+static uint8_t *trace_bits = nullptr;
+static HANDLE hMapFile = INVALID_HANDLE_VALUE;
 
 
 static unsigned long envId = 0;
@@ -148,8 +148,6 @@ static unsigned long generateRandNum()
 // memory segment for the communication between the parent and the child.
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-	// printf("Entered LLVMFuzzerInitialize...\n");
-
 	unsigned long localEnvId;
 
 	envIdMutex.lock(); // Important to have if multiple jobs are being run in this process
@@ -164,31 +162,23 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 	envIdMutex.unlock();
 
 	parse_flags(*argc, *argv);
-
-	// printf("Parsed flags...\n");
-
 	if (target_path.empty())
 	{
 		die("You must specify the target path by using the --target_path command line flag.");
 	}
 
-	// printf("Target path found.\n");
-
 	SECURITY_ATTRIBUTES securityAttrs = {
 		sizeof(SECURITY_ATTRIBUTES),
 		nullptr,
-		true,
+		TRUE,
 	};
 
 	
-	std::string randomPipeId = std::to_string(localEnvId); // TODO: change this!
+	std::string randomPipeId = std::to_string(localEnvId);
 
 	std::string CTL_PIPE_NAME = "__LIBFUZZER_CTL_PIPE_" + randomPipeId;
 	std::string ST_PIPE_NAME = "__LIBFUZZER_ST_PIPE_" + randomPipeId;
 	std::string SZ_NAME = "__LIBFUZZER_MAPPING_" + randomPipeId;
-
-	// printf("ctl pipe name (C++ side): %s\n", CTL_PIPE_NAME.c_str());
-	// printf("st pipe name (C++ side): %s\n", ST_PIPE_NAME.c_str());
 
 	ctlPipe = CreateNamedPipe(
 							("\\\\.\\pipe\\" + CTL_PIPE_NAME).c_str(),
@@ -215,6 +205,7 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 							&securityAttrs);
 	
 	if (stPipe == INVALID_HANDLE_VALUE) {
+		CloseHandle(ctlPipe);
 		die_sys("Could not create st pipe");
 	}
 
@@ -232,8 +223,6 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 		die_sys("Could not set ST pipe env variable");
 	}
 
-	//printf("Creating file mapping...\n");
-
 	hMapFile = CreateFileMapping(
 					INVALID_HANDLE_VALUE,	// use paging file
 					&securityAttrs,			// default security
@@ -242,11 +231,9 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 					MAP_SIZE + DATA_SIZE,	// max object size (low-order)
 					(LPCTSTR) SZ_NAME.c_str());			// name of mapping obj
 
-	if (hMapFile == nullptr) {
+	if (hMapFile == INVALID_HANDLE_VALUE) {
 		die_sys("Could not create file mapping object");
 	}
-
-	// printf("File mapping created.\n");
 
 	trace_bits = (uint8_t*) MapViewOfFile(hMapFile,
 								FILE_MAP_ALL_ACCESS,
@@ -255,6 +242,7 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 								MAP_SIZE + DATA_SIZE);
 
 	if (trace_bits == nullptr) {
+		CloseHandle(hMapFile);
 		die_sys("Could not map view of file");
 	}
 
@@ -264,9 +252,6 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 	if (result == FALSE) {
 		die_sys("Could not set SHM ID variable");
 	}
-
-
-	// printf("Creating C# process...\n");
 
 	STARTUPINFO startupInfo = {0};
 	PROCESS_INFORMATION processInfo = {0};
@@ -287,34 +272,25 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 		die_sys("CreateProcessA failed");
 	}
 
-	// printf("C# process created.\n");
+	CloseHandle(processInfo.hProcess); // TODO: use this to check for child process death instead
+	CloseHandle(processInfo.hThread);
 
 	int32_t status;
 	DWORD totalBytesRead = 0;
 	DWORD bytesRead = 0;
-
-	// printf("Connecting to st pipe...\n");
 
 	BOOL connected = ConnectNamedPipe(stPipe, nullptr);
 	if (connected == FALSE && (GetLastError() != ERROR_PIPE_CONNECTED)) {
 		die_sys("ConnectNamedPipe() failed for st");
 	}
 
-	// printf("Connected to st pipe.\n");
-
-
-	// printf("Connecting to ctl pipe...\n");
-
 	connected = ConnectNamedPipe(ctlPipe, nullptr);
 	if (connected == FALSE && (GetLastError() != ERROR_PIPE_CONNECTED)) {
 		die_sys("ConnectNamedPipe() failed for ctl");
 	}
 
-	// printf("Connected to ctl pipe.\n");
-
 	BOOL fileWasRead = ReadFile(stPipe, (LPVOID) &status, LEN_FLD_SIZE - totalBytesRead, &bytesRead, nullptr);
 	if (fileWasRead == FALSE) {
-		// Check GetLastError() for EINTR?
 		die_sys("ReadFile() failed");
 	}
 
@@ -325,8 +301,6 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 		die_sys("Short read: expected 4 bytes but got less than that during startup");
 	}
 
-	// printf("Exiting LLVMFuzzerInitialize...\n");
-
 	return 0;
 }
 
@@ -336,29 +310,19 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 // the status of the executed operation.
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-	// printf("Entering LLVMFuzzerTestOneInput...\n");
-
 	if (size > DATA_SIZE)
 	{
 		die("Size of the input data must not exceed 1 MiB.");
 	}
 
-	// printf("Setting trace_bits data...\n");
-
 	memset(trace_bits, 0, MAP_SIZE);
 	memcpy(trace_bits + MAP_SIZE, data, size);
-
-	// printf("Trace_bits data set.\n");
-
-	// printf("Writing %d to ctl pipe...\n", (uint32_t) size);
 
 	DWORD bytesWritten = 0;
 	BOOL writeResult = WriteFile(ctlPipe, &size, LEN_FLD_SIZE, &bytesWritten, nullptr);
 	if (writeResult == FALSE) {
 		die_sys("WriteFile() failed for ctl pipe");
 	}
-
-	// printf("ctl pipe written to.\n");
 
 	if (bytesWritten != LEN_FLD_SIZE) {
 		die("short write: expected 4 bytes, got less than that for ctl pipe");
@@ -387,9 +351,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	if (status) {
 		__builtin_trap();
 	}
-
-
-	// printf("Exiting LLVMFuzzerTestOneInput...\n");
 
 	return 0;
 }
