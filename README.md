@@ -70,7 +70,7 @@ As we can see, running fuzzing is as simple as calling `Fuzzer.LibFuzzer.Run()` 
 function, passing in a function (or in our case, a lambda) that accepts a ReadOnlySpan of bytes, 
 and calling our library functions with the passed in bytes. The function passed into 
 Fuzzer.LibFuzzer.Run will be called over and over again with unique data each time, and any 
-exceptions thrown within the function will be recorded as crashes.
+unchecked exceptions that are thrown by the function will be recorded as crashes.
 
 Occasionaly, you may want to fuzz a library class or method that has one-time initialization or 
 cleanup procedures. Adding these functions within the `Run` method would introduce that overhead 
@@ -93,7 +93,14 @@ namespace TestExample1
 
 			Fuzzer.LibFuzzer.Run(bytes =>
 			{
-				// pass input bytes to library functions here
+				try
+				{
+					// pass input bytes to library functions here
+				} 
+				catch (ExpectedException) 
+				{
+					// Catch only exceptions that are meant to be thrown by the library
+				}
 			});
 
 			Fuzzer.LibFuzzer.Cleanup(() =>
@@ -121,13 +128,13 @@ cover that next.
 In order to provide targeted fuzzing, frameworks usually require some kind of feedback on what 
 control path was taken during a given execution. WinSharpFuzz gathers this feedback by 
 *instrumenting* the target C# library, or adding hooks at each possible control path in the 
-library. These hooks report which path of execution was taken, thereby giving the fuzzing framework 
-clear feedback on where it should try to mutate its inputs next.
+library. These hooks report which path of execution was taken for each fuzzing attempt, thereby 
+giving the fuzzing framework clear feedback on where it should try to mutate its inputs next.
 
 Thankfully, both the process of adding these hooks and the handling of the information they report 
 are taken care of by WinSharpFuzz. The `WinSharpFuzz.CommandLine.exe` executable can be used to 
-instrument dll files in place, while the `WinSharpFuzz` and `WinSharpFuzz.Common` libraries handle 
-the information provided by this instrumentation.
+instrument dll files in place, while the `WinSharpFuzz` and `WinSharpFuzz.Common` libraries provide 
+a framework that handles the information recorded by the instrumentation.
 
 To instrument a dll file, simply execute the following command:
 
@@ -138,34 +145,36 @@ To instrument a dll file, simply execute the following command:
 
 You only need to instrument each library once. If you have multiple other libraries that the target 
 library depends on, you can choose whether you want to instrument those or not--but remember that 
-classes and methods from uninstrumented libraries won't give any control flow feedback to the 
-fuzzer. 
+any classes and methods called from uninstrumented libraries won't give any control flow feedback 
+to the fuzzer. 
 
 #### Building the Test Executable
 
 Once the harness is written up, the next step is to add the necessary libraries and build the 
-project. The `WinSharpFuzz.dll` and `WinSharpFuzz.Common.dll` are both needed in order to include 
-WinSharpFuzz in the project, so make sure to add both of those. They can be found in 
-`src/WinSharpFuzz/WinSharpFuzz/bin/Debug/netstandard2.0/*.dll`.
+project. The `WinSharpFuzz.dll` and `WinSharpFuzz.Common.dll` libraries are both needed in order to 
+include WinSharpFuzz in the project, so make sure to add both of those as references. They can be 
+found in `src/WinSharpFuzz/WinSharpFuzz/bin/Debug/netstandard2.0/*.dll`.
 
 TODO: explain how to add libraries both in .csproj and in Visual Studio
 
-Now the harness should be all ready for building. You can build either with Ctrl+Shift+B 
-in Visual studio or by executing `dotnet build` from powershell in the root of the project. 
-Then determine the path to the resulting executable.
+Now the harness should be all ready to be built. Just like before, you can build either with 
+Ctrl+Shift+B in Visual studio or by executing `dotnet build` from powershell in the root of the 
+project. Once the build has finished, find the path to the resulting executable (it's usually 
+something like `bin/x64/Debug/your_project_name.exe`).
 
 #### Running WinSharpFuzz with LibFuzzer
 
-On its own, libFuzzer is meant for C/C++ projects. However, the code provided in 
-`libfuzzer-dotnet/` bridges the gap between libFuzzer and C# code through the use of pipes and 
-shared memory; from a high level, these allow the libfuzzer-dotnet binary to pass fuzzing inputs to 
-the C# executable, which in turn passes back control flow information to the C++ binary. With this 
-setup, fuzzing can be performed using the simple command:
+On its own, libFuzzer is meant for C/C++ projects. However, the code provided in the 
+`libfuzzer-dotnet/` subdirectory bridges the gap between libFuzzer and C# code through the use of 
+pipes and shared memory. From a high level, these allow the libfuzzer-dotnet binary to pass fuzzing 
+inputs to the C# executable, which in turn passes back control flow information to the C++ binary. 
+With this setup, fuzzing can be performed using one simple command:
 
 `libfuzzer-dotnet.exe --target_path="\path\to\HarnessExecutable.exe" "\path\to\corpus"`
 
-`"\path\to\corpus"` is optional; if specified, it should be a directory containing example inputs 
-for the fuzzer to go off of. These inputs can be a mixture of valid and invalid cases.
+`"\path\to\corpus"` is optional; if specified, it is the path of a folder containing example inputs 
+that will be mutated by the fuzzer to provide unique tests. These inputs can be a mixture of valid 
+and invalid test cases, but they should not cause the program to crash.
 
 Additional libFuzzer options can be used from this executable, such as specifying the number of 
 consecutive jobs to be run or maximum input size. More information on these options can be found 
