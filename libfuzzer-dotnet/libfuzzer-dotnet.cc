@@ -1,12 +1,5 @@
-//#include <windows.h>
-//#include <stdio.h>
-//#include <conio.h>
-//#include <tchar.h>
-//#include <fileapi.h>
-
 #pragma comment(lib, "bcrypt.lib")
 
-#include <ctime>
 #include <limits>
 #include <mutex>
 #include <string>
@@ -19,12 +12,14 @@
 #include <bcrypt.h>
 #include <ntstatus.h>
 
+
 #define MAP_SIZE (1 << 16)
 #define DATA_SIZE (1 << 24)
-
 #define LEN_FLD_SIZE 4
 
-#define SHM_ID_VAR "__LIBFUZZER_SHM_ID"
+#define SHM_ENV_LABEL "__LIBFUZZER_SHM_ID"
+#define ST_ENV_LABEL "__LIBFUZZER_ST_PIPE"
+#define CTL_ENV_LABEL "__LIBFUZZER_CTL_PIPE"
 
 __attribute__((weak, section("__libfuzzer_extra_counters")))
 uint8_t extra_counters[MAP_SIZE];
@@ -38,7 +33,7 @@ static std::string target_arg;
 static HANDLE ctlPipe = INVALID_HANDLE_VALUE;
 static HANDLE stPipe = INVALID_HANDLE_VALUE;
 
-static uint8_t *trace_bits = nullptr;
+static uint8_t *trace_bits = NULL;
 static HANDLE hMapFile = INVALID_HANDLE_VALUE;
 
 
@@ -46,20 +41,17 @@ static unsigned long envId = 0;
 static std::mutex envIdMutex;
 
 
-static void die(const char *msg)
-{
+static void die(const char *msg) {
 	printf("%s\n", msg);
 	exit(1);
 }
 
-static void die_sys(const char *msg)
-{
+static void die_sys(const char *msg) {
 	printf("%s: %lu\n", msg, GetLastError());
 	exit(1);
 }
 
-static void remove_shm()
-{
+static void remove_shm() {
 	UnmapViewOfFile(trace_bits);
 	CloseHandle(hMapFile);
 }
@@ -71,12 +63,11 @@ static void close_pipes() {
 
 // Read the flag value from the single command line parameter. For example,
 // read_flag_value("--target_path=binary", "--target-path") will return "binary".
-static std::string read_flag_value(const char *param, const char *name)
-{
+static std::string read_flag_value(const char *param, const char *name) {
+
 	size_t len = strlen(name);
 
-	if (strstr(param, name) == param && param[len] == '=' && param[len + 1])
-	{
+	if (strstr(param, name) == param && param[len] == '=' && param[len + 1]) {
 		return std::string(&param[len + 1]);
 	}
 
@@ -85,46 +76,43 @@ static std::string read_flag_value(const char *param, const char *name)
 
 // Read target_path (the path to .NET executable) and target_arg (optional command
 // line argument that can be passed to .NET executable) from the command line parameters.
-static void parse_flags(int argc, char **argv)
-{
-	for (int i = 1; i < argc; ++i)
-	{
+static void parse_flags(int argc, char **argv) {
+
+	for (int i = 1; i < argc; ++i) {
 		char *param = argv[i];
 
-		if (target_path.empty())
-		{
+		if (target_path.empty()) {
 			target_path = read_flag_value(param, target_path_name);
 		}
 
-		if (target_arg.empty())
-		{
+		if (target_arg.empty()) {
 			target_arg = read_flag_value(param, target_arg_name);
 		}
 	}
 }
 
-static unsigned long generateRandNum()
-{
+static unsigned long generateRandNum() {
+
 	unsigned char buf[sizeof(unsigned long)] = {0};
 	unsigned long randNum;
 
 	BCRYPT_ALG_HANDLE hAlgorithm;
 
 	NTSTATUS status = BCryptOpenAlgorithmProvider(
-									&hAlgorithm,
-									BCRYPT_RNG_ALGORITHM,
-									nullptr,
-									0);
+							&hAlgorithm,
+							BCRYPT_RNG_ALGORITHM,
+							NULL,
+							0);
 	if (status != STATUS_SUCCESS) {
-		printf("Failed to generate random number.\n");
+		printf("Failed to instantiate random number provider.\n");
 		exit(1);
 	}
 
 	status = BCryptGenRandom(
-						hAlgorithm,
-						buf,
-						sizeof(unsigned long),
-						0);
+					hAlgorithm,
+					buf,
+					sizeof(unsigned long),
+					0);
 
 	if (status != STATUS_SUCCESS) {
 		printf("Failed to generate random number.\n");
@@ -139,8 +127,8 @@ static unsigned long generateRandNum()
 
 // Start the .NET child process and initialize two pipes and one shared
 // memory segment for the communication between the parent and the child.
-extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
-{
+extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
+
 	unsigned long localEnvId;
 
 	envIdMutex.lock(); // Important to have if multiple jobs are being run in this process
@@ -155,46 +143,48 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 	envIdMutex.unlock();
 
 	parse_flags(*argc, *argv);
-	if (target_path.empty())
-	{
+
+	if (target_path.empty()) {
 		die("You must specify the target path by using the --target_path command line flag.");
 	}
 
 	SECURITY_ATTRIBUTES securityAttrs = {
 		sizeof(SECURITY_ATTRIBUTES),
-		nullptr,
+		NULL,
 		TRUE,
 	};
 	
 	std::string randomPipeId = std::to_string(localEnvId);
 
-	std::string CTL_PIPE_NAME = "__LIBFUZZER_CTL_PIPE_" + randomPipeId;
-	std::string ST_PIPE_NAME = "__LIBFUZZER_ST_PIPE_" + randomPipeId;
-	std::string SZ_NAME = "__LIBFUZZER_MAPPING_" + randomPipeId;
+	std::string CTL_PIPE_ID = "__LIBFUZZER_CTL_PIPE_" + randomPipeId;
+	std::string CTL_PIPE_PATH = "\\\\.\\pipe\\" + CTL_PIPE_ID;
+	std::string ST_PIPE_ID = "__LIBFUZZER_ST_PIPE_" + randomPipeId;
+	std::string ST_PIPE_PATH = "\\\\.\\pipe\\" + ST_PIPE_ID;
+	std::string SHM_ID = "__LIBFUZZER_SHM_" + randomPipeId;
 
 	ctlPipe = CreateNamedPipe(
-							("\\\\.\\pipe\\" + CTL_PIPE_NAME).c_str(),
-							PIPE_ACCESS_OUTBOUND,
-							PIPE_TYPE_BYTE | PIPE_WAIT,
-							2, // TODO: change to 1?
-							65536,
-							65536,
-							0,
-							&securityAttrs);
+					CTL_PIPE_PATH.c_str(),
+					PIPE_ACCESS_OUTBOUND,
+					PIPE_TYPE_BYTE | PIPE_WAIT,
+					1,
+					65536,
+					65536,
+					0,
+					&securityAttrs);
 
 	if (ctlPipe == INVALID_HANDLE_VALUE) {
 		die_sys("Could not create ctl pipe");
 	}
 
 	stPipe = CreateNamedPipe(
-							("\\\\.\\pipe\\" + ST_PIPE_NAME).c_str(),
-							PIPE_ACCESS_INBOUND,
-							PIPE_TYPE_BYTE | PIPE_WAIT,
-							2, // TODO: change to 1?
-							65536,
-							65536,
-							0,
-							&securityAttrs);
+				ST_PIPE_PATH.c_str(),
+				PIPE_ACCESS_INBOUND,
+				PIPE_TYPE_BYTE | PIPE_WAIT,
+				1,
+				65536,
+				65536,
+				0,
+				&securityAttrs);
 	
 	if (stPipe == INVALID_HANDLE_VALUE) {
 		CloseHandle(ctlPipe);
@@ -203,17 +193,19 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 
 	atexit(close_pipes);
 
+
 	BOOL result;
 
-	result = SetEnvironmentVariable((LPCTSTR) "__LIBFUZZER_CTL_PIPE", (LPCTSTR) (CTL_PIPE_NAME).c_str());
+	result = SetEnvironmentVariable((LPCTSTR) CTL_ENV_LABEL, (LPCTSTR) CTL_PIPE_ID.c_str());
 	if (result == FALSE) {
 		die_sys("Could not set CTL pipe env variable");
 	}
 
-	result = SetEnvironmentVariable((LPCTSTR) "__LIBFUZZER_ST_PIPE", (LPCTSTR) (ST_PIPE_NAME).c_str());
+	result = SetEnvironmentVariable((LPCTSTR) ST_ENV_LABEL, (LPCTSTR) ST_PIPE_ID.c_str());
 	if (result == FALSE) {
 		die_sys("Could not set ST pipe env variable");
 	}
+
 
 	hMapFile = CreateFileMapping(
 					INVALID_HANDLE_VALUE,		// use paging file
@@ -221,7 +213,7 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 					PAGE_READWRITE,				// r/w access
 					0,							// max object size (high-order)
 					MAP_SIZE + DATA_SIZE,		// max object size (low-order)
-					(LPCTSTR) SZ_NAME.c_str());	// name of mapping obj
+					(LPCTSTR) SHM_ID.c_str());	// name of mapping obj
 
 	if (hMapFile == INVALID_HANDLE_VALUE) {
 		die_sys("Could not create file mapping object");
@@ -233,35 +225,37 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 								0,
 								MAP_SIZE + DATA_SIZE);
 
-	if (trace_bits == nullptr) {
+	if (trace_bits == NULL) {
 		CloseHandle(hMapFile);
 		die_sys("Could not map view of file");
 	}
 
 	atexit(remove_shm);
 
-	result = SetEnvironmentVariable(LPCTSTR(SHM_ID_VAR), (LPCTSTR) SZ_NAME.c_str());
+
+	result = SetEnvironmentVariable((LPCTSTR) SHM_ENV_LABEL, (LPCTSTR) SHM_ID.c_str());
 	if (result == FALSE) {
-		die_sys("Could not set SHM ID variable");
+		die_sys("Could not set Shared Memory environment variable.");
 	}
+
 
 	STARTUPINFO startupInfo = {0};
 	PROCESS_INFORMATION processInfo = {0};
 
 	BOOL processResult = CreateProcess(
 							target_path.c_str(),
-							(target_arg.empty() ? nullptr : (LPSTR) target_arg.c_str()),
-							nullptr,
-							nullptr,
+							(target_arg.empty() ? NULL : (LPSTR) target_arg.c_str()),
+							NULL,
+							NULL,
 							TRUE,
 							0,
-							nullptr,
-							nullptr,
+							NULL,
+							NULL,
 							&startupInfo,
 							&processInfo);
 
 	if (processResult == FALSE) {
-		die_sys("CreateProcessA failed");
+		die_sys("Failed to instantiate C# process.");
 	}
 
 	CloseHandle(processInfo.hProcess); // TODO: use this to check for child process death instead
@@ -271,25 +265,24 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 	DWORD totalBytesRead = 0;
 	DWORD bytesRead = 0;
 
-	BOOL connected = ConnectNamedPipe(stPipe, nullptr);
+	BOOL connected = ConnectNamedPipe(stPipe, NULL);
 	if (connected == FALSE && (GetLastError() != ERROR_PIPE_CONNECTED)) {
 		die_sys("ConnectNamedPipe() failed for st");
 	}
 
-	connected = ConnectNamedPipe(ctlPipe, nullptr);
+	connected = ConnectNamedPipe(ctlPipe, NULL);
 	if (connected == FALSE && (GetLastError() != ERROR_PIPE_CONNECTED)) {
 		die_sys("ConnectNamedPipe() failed for ctl");
 	}
 
-	BOOL fileWasRead = ReadFile(stPipe, (LPVOID) &status, LEN_FLD_SIZE - totalBytesRead, &bytesRead, nullptr);
+	BOOL fileWasRead = ReadFile(stPipe, (LPVOID) &status, LEN_FLD_SIZE - totalBytesRead, &bytesRead, NULL);
 	if (fileWasRead == FALSE) {
 		die_sys("ReadFile() failed");
 	}
 
 	totalBytesRead += bytesRead;
 
-	if (totalBytesRead != LEN_FLD_SIZE)
-	{
+	if (totalBytesRead != LEN_FLD_SIZE) {
 		die_sys("Short read: expected 4 bytes but got less than that during startup");
 	}
 
@@ -300,10 +293,9 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv)
 // the size of the data to the .NET process (which will then run
 // its own fuzzing function on the shared memory data), and receiving
 // the status of the executed operation.
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
-{
-	if (size > DATA_SIZE)
-	{
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
+
+	if (size > DATA_SIZE) {
 		die("Size of the input data must not exceed 1 MiB.");
 	}
 
@@ -311,33 +303,28 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	memcpy(trace_bits + MAP_SIZE, data, size);
 
 	DWORD bytesWritten = 0;
-	BOOL writeResult = WriteFile(ctlPipe, &size, LEN_FLD_SIZE, &bytesWritten, nullptr);
-	if (writeResult == FALSE) 
-	{
+	BOOL writeResult = WriteFile(ctlPipe, &size, LEN_FLD_SIZE, &bytesWritten, NULL);
+	if (writeResult == FALSE) {
 		die_sys("WriteFile() failed for ctl pipe");
 	}
 
-	if (bytesWritten != LEN_FLD_SIZE) 
-	{
+	if (bytesWritten != LEN_FLD_SIZE) {
 		die("short write: expected 4 bytes, got less than that for ctl pipe");
 	}
 
 	int32_t status;
 	DWORD bytesRead = 0;
 
-	BOOL readResult = ReadFile(stPipe, &status, LEN_FLD_SIZE, &bytesRead, nullptr);
-	if (readResult == FALSE) 
-	{
+	BOOL readResult = ReadFile(stPipe, &status, LEN_FLD_SIZE, &bytesRead, NULL);
+	if (readResult == FALSE) {
 		die_sys("ReadFile() failed for st pipe");
 	}
 
-	if (bytesRead == 0) 
-	{
+	if (bytesRead == 0) {
 		die("The child process terminated unexpectedly.");
 	}
 
-	if (bytesRead != LEN_FLD_SIZE) 
-	{
+	if (bytesRead != LEN_FLD_SIZE) {
 		die("short read: expected 4 bytes, got less");
 	}
 
