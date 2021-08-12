@@ -1,8 +1,8 @@
 # libfuzzer-dotnet
 
-libFuzzer driver for SharpFuzz. Read [Using libFuzzer with SharpFuzz] for usage instructions.
+libFuzzer driver for WinSharpFuzz. Read [Using libFuzzer with SharpFuzz] for usage instructions.
 
-[Using libFuzzer with SharpFuzz]: https://github.com/Metalnem/sharpfuzz/blob/master/docs/libFuzzer.md
+[Using libFuzzer with WinSharpFuzz]: https://github.com/nathaniel-bennett/winsharpfuzz/blob/master/docs/libFuzzer.md
 
 The required executable file (libfuzzer-dotnet.exe) is contained within the zipped folder `libfuzzer-dotnet-windows.zip`. It is a 64-bit binary, to the best of my knowledge. To build it from source, follow the following steps:
 

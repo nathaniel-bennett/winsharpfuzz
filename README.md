@@ -1,4 +1,4 @@
-# sharpfuzz-windows
+# winsharpfuzz
 
 .NET fuzzing integration with libFuzzer, ported to the Windows platform
 
@@ -183,3 +183,8 @@ options (such as `-malloc_limit_mb`) will not be useful because of the independa
 libfuzzer and .NET executables operate.
 
 
+## Acknowledgements
+
+This project is an unofficial fork of [SharpFuzz](https://github.com/metalnem/sharpfuzz) for the Windows platform; as such, portions of its code were developed and released by Nemanja Mijailovic, who released it under the MIT license (see NOTICE.txt). This project wouldn't be possible without the groundwork he laid by developing SharpFuzz.
+
+Special thanks also goes to ManTech Corporation (www.mantech.com) for facilitating the development and open-source release of this fuzzing tool.
