@@ -52,16 +52,16 @@ using SharpFuzz;
 
 namespace TestExample1
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			Fuzzer.LibFuzzer.Run(bytes =>
-			{
-				// pass input bytes to library functions here
-			});
-		}
-	}
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            Fuzzer.LibFuzzer.Run(bytes =>
+            {
+                // pass input bytes to library functions here
+            });
+        }
+    }
 }
 
 ```
@@ -82,33 +82,33 @@ any setup or teardown functions needed:
 ```cs
 namespace TestExample1
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			Fuzzer.LibFuzzer.Initialize(() =>
-			{
-				// Initialize the library here
-			});
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            Fuzzer.LibFuzzer.Initialize(() =>
+            {
+                // Initialize the library here
+            });
 
-			Fuzzer.LibFuzzer.Run(bytes =>
-			{
-				try
-				{
-					// pass input bytes to library functions here
-				} 
-				catch (ExpectedException) 
-				{
-					// Catch only exceptions that are meant to be thrown by the library
-				}
-			});
+            Fuzzer.LibFuzzer.Run(bytes =>
+            {
+                try
+                {
+                    // pass input bytes to library functions here
+                } 
+                catch (ExpectedException) 
+                {
+                    // Catch only exceptions that are meant to be thrown by the library
+                }
+            });
 
-			Fuzzer.LibFuzzer.Cleanup(() =>
-			{
-				// Call any cleanup functions on the library here 
-			});
-		}
-	}
+            Fuzzer.LibFuzzer.Cleanup(() =>
+            {
+                // Call any cleanup functions on the library here 
+            });
+        }
+    }
 }
 ```
 
