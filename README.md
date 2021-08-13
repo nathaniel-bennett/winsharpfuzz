@@ -11,9 +11,9 @@
 
 ## Acknowledgements
 
-This project is an unofficial fork of [SharpFuzz](https://github.com/metalnem/sharpfuzz) for the Windows platform; as such, portions of its code were developed and released by Nemanja Mijailovic, who released it under the MIT license (see NOTICE.txt). This project wouldn't be possible without the groundwork he laid by developing SharpFuzz.
-
-Special thanks also goes to ManTech Corporation (www.mantech.com) for facilitating the development and open-source release of this fuzzing tool.
+This project is an unofficial fork of [SharpFuzz](https://github.com/metalnem/sharpfuzz) for the Windows platform; as such, portions of this codebase were written by Nemanja Mijailovic (see NOTICE.txt for license information). This project wouldn't be possible without the groundwork he laid by developing SharpFuzz.
+ 
+Special thanks also goes to ManTech Corporation (www.mantech.com) for facilitating the development and open source release of this fuzzing tool.
 
 ## Requirements
 
