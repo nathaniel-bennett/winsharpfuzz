@@ -4,10 +4,16 @@
 
 ## Table of Contents
 
-1. [Requirements](#requirements)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Acknowledgements](#acknowledgements)
+1. [Acknowledgements](#acknowledgements)
+2. [Requirements](#requirements)
+3. [Installation](#installation)
+4. [Usage](#usage)
+
+## Acknowledgements
+
+This project is an unofficial fork of [SharpFuzz](https://github.com/metalnem/sharpfuzz) for the Windows platform; as such, portions of its code were developed and released by Nemanja Mijailovic, who released it under the MIT license (see NOTICE.txt). This project wouldn't be possible without the groundwork he laid by developing SharpFuzz.
+
+Special thanks also goes to ManTech Corporation (www.mantech.com) for facilitating the development and open-source release of this fuzzing tool.
 
 ## Requirements
 
@@ -193,10 +199,3 @@ consecutive jobs to be run or maximum input size. More information on these opti
 [here](https://llvm.org/docs/LibFuzzer.html#options). It should be noted that some of the memory 
 options (such as `-malloc_limit_mb`) will not be useful because of the independant way in which the 
 libfuzzer and .NET executables operate.
-
-
-## Acknowledgements
-
-This project is an unofficial fork of [SharpFuzz](https://github.com/metalnem/sharpfuzz) for the Windows platform; as such, portions of its code were developed and released by Nemanja Mijailovic, who released it under the MIT license (see NOTICE.txt). This project wouldn't be possible without the groundwork he laid by developing SharpFuzz.
-
-Special thanks also goes to ManTech Corporation (www.mantech.com) for facilitating the development and open-source release of this fuzzing tool.
