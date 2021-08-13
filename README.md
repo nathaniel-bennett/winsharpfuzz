@@ -12,6 +12,11 @@
 2. [Requirements](#requirements)
 3. [Installation](#installation)
 4. [Usage](#usage)
+    * [Test Harness](#writing-a-test-harness)
+    * [Instrumenting](#instrumenting-the-target-library)
+    * [Building](#building-the-test-executable)
+    * [Running with LibFuzzer](#running-winsharpfuzz-with-libfuzzer)
+5. [Further Work](#further-work)
 
 ## Acknowledgements
 
@@ -203,3 +208,11 @@ consecutive jobs to be run or maximum input size. More information on these opti
 [here](https://llvm.org/docs/LibFuzzer.html#options). It should be noted that some of the memory 
 options (such as `-malloc_limit_mb`) will not be useful because of the independant way in which the 
 libfuzzer and .NET executables operate.
+
+# Further Work
+
+This library is still a work in progress. Future plans include:
+
+- Adding a build pipeline 
+- Creating a NuGet repository to make installation of the library easier
+- Exploring compatability options with WinAFL and other Windows fuzzers
