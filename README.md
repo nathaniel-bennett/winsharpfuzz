@@ -1,5 +1,10 @@
 # WinSharpFuzz: Coverage-based Fuzzing for Windows .NET
 
+[![License][license-shield]][license-link]
+
+[license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
+[license-link]: https://github.com/metalnem/sharpfuzz/blob/master/LICENSE
+
 - Fully ported to Windows; can handle .NET/Core/Framework libraries
 - Supports both IL and mixed-mode assemblies
 - Uses libFuzzer heuristics to generate inputs--most libFuzzer options are supported
