@@ -1,6 +1,10 @@
-# winsharpfuzz
+# WinSharpFuzz: Coverage-based Fuzzing for Windows .NET
 
-.NET fuzzing integration with libFuzzer, ported to the Windows platform
+- Fully ported to Windows; can handle .NET/Core/Framework libraries
+- Supports both IL and mixed-mode assemblies
+- Uses libFuzzer heuristics to generate inputs--most libFuzzer options are supported
+- Reports any erroneous exceptions as crashes
+- Well-suited for discovering memory corruption issues in `unsafe` or `Marshal` method calls
 
 ## Table of Contents
 
