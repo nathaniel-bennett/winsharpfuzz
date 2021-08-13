@@ -11,7 +11,7 @@
 
 ## Requirements
 
-As the name suggests, this library is capable of fuzzing C# libraries in a Windows environment. It supports both IL and mixed-mode .dll libraries, and core libraries can also be instrumented and fuzzed with this tool. Linux and MacOS platforms are not supported by this fuzzer. All you will need is a Windows computer with some way to compile the C# code (either [.NET Core 2.1+](https://dotnet.microsoft.com/) or a Visual Studio installation).
+As the name suggests, this library is capable of fuzzing C# libraries in a Windows environment. It supports both IL and mixed-mode .dll assemblies, and .NET Framework libraries can also be instrumented and fuzzed with this tool. Linux and MacOS platforms are not supported by this fuzzer. All you will need is a Windows computer with some way to compile the C# code (either [.NET Core/Framework](https://dotnet.microsoft.com/download) or a Visual Studio installation).
 
 In its current state, the WinSharpFuzz library only supports fuzzing with libFuzzer. A zipped binary is available to use that sends libFuzzer inputs to code instrumented with WinSharpFuzz, so no C/C++ compiler is required; however, if you want to build the binary from source then you will need a recent version of [Clang](https://llvm.org/builds/) installed.
 
