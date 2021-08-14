@@ -26,8 +26,6 @@ SOFTWARE.
 
 #pragma comment(lib, "bcrypt.lib")
 
-#include <limits>
-#include <mutex>
 #include <string>
 
 #define NOMINMAX
@@ -61,10 +59,6 @@ static HANDLE stPipe = INVALID_HANDLE_VALUE;
 
 static uint8_t *trace_bits = NULL;
 static HANDLE hMapFile = INVALID_HANDLE_VALUE;
-
-
-static unsigned long envId = 0;
-static std::mutex envIdMutex;
 
 
 static void die(const char *msg) {
@@ -155,19 +149,10 @@ static unsigned long generateRandNum() {
 // memory segment for the communication between the parent and the child.
 extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
 
-	unsigned long localEnvId;
+	unsigned long uniqueIdNum;
 
-	envIdMutex.lock(); // Important to have if multiple jobs are being run in this process
-
-	if (envId == 0) {
-		envId = generateRandNum(); // Different instances need to used different pipe names to work
-	}
-
-	localEnvId = envId;
-	envId = (envId == std::numeric_limits<unsigned long>::max()) ? 1 : (envId + 1); // Increment, wrapping safely if necessary
-
-	envIdMutex.unlock();
-
+	uniqueIdNum = generateRandNum(); // Different instances need to used different pipe names to work
+	
 	parse_flags(*argc, *argv);
 
 	if (target_path.empty()) {
@@ -180,13 +165,13 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
 		TRUE,
 	};
 	
-	std::string randomPipeId = std::to_string(localEnvId);
+	std::string uniquePipeId = std::to_string(uniqueIdNum);
 
-	std::string CTL_PIPE_ID = "__LIBFUZZER_CTL_PIPE_" + randomPipeId;
+	std::string CTL_PIPE_ID = "__LIBFUZZER_CTL_PIPE_" + uniquePipeId;
 	std::string CTL_PIPE_PATH = "\\\\.\\pipe\\" + CTL_PIPE_ID;
-	std::string ST_PIPE_ID = "__LIBFUZZER_ST_PIPE_" + randomPipeId;
+	std::string ST_PIPE_ID = "__LIBFUZZER_ST_PIPE_" + uniquePipeId;
 	std::string ST_PIPE_PATH = "\\\\.\\pipe\\" + ST_PIPE_ID;
-	std::string SHM_ID = "__LIBFUZZER_SHM_" + randomPipeId;
+	std::string SHM_ID = "__LIBFUZZER_SHM_" + uniquePipeId;
 
 	ctlPipe = CreateNamedPipe(
 					CTL_PIPE_PATH.c_str(),
