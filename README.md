@@ -1,7 +1,10 @@
 # WinSharpFuzz: Coverage-based Fuzzing for Windows .NET
 
+[![Build Status][build-shield]][build-link]
 [![License][license-shield]][license-link]
 
+[build-shield]: https://ci.appveyor.com/api/projects/status/91tx1501qeev5rwf?svg=true 
+[build-link]: https://ci.appveyor.com/project/Metalnem/sharpfuzz
 [license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
 [license-link]: https://github.com/metalnem/sharpfuzz/blob/master/LICENSE
 
