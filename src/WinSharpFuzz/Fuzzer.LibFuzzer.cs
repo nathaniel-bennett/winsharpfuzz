@@ -14,7 +14,7 @@ namespace WinSharpFuzz
 		/// LibFuzzer class contains the libFuzzer runner. It enables users
 		/// to fuzz their code with libFuzzer by using the libFuzzer-dotnet
 		/// binary, which acts as a bridge between the libFuzzer and the
-		/// managed code (it currently works only on Linux).
+		/// managed code.
 		/// </summary>
 		public static class LibFuzzer
 		{
@@ -76,7 +76,7 @@ namespace WinSharpFuzz
 					return;
 				}
 
-				using (var mappedFile = System.IO.MemoryMappedFiles.MemoryMappedFile.OpenExisting(mappedFileID, MemoryMappedFileRights.ReadWrite, HandleInheritability.Inheritable))
+				using (var mappedFile = MemoryMappedFile.OpenExisting(mappedFileID, MemoryMappedFileRights.ReadWrite, HandleInheritability.Inheritable))
 				using (var readPipe = new NamedPipeClientStream(".", readPipeName, PipeDirection.In))
 				using (var writePipe = new NamedPipeClientStream(".", writePipeName, PipeDirection.Out))
 				{

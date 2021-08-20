@@ -26,6 +26,7 @@ SOFTWARE.
 
 #pragma comment(lib, "bcrypt.lib")
 
+#include <csignal>
 #include <string>
 
 #define NOMINMAX
@@ -60,6 +61,11 @@ static HANDLE stPipe = INVALID_HANDLE_VALUE;
 static uint8_t *trace_bits = NULL;
 static HANDLE hMapFile = INVALID_HANDLE_VALUE;
 
+static HANDLE dotnetProcess = INVALID_HANDLE_VALUE;
+
+static void kill_handler(int signum) {
+	exit(signum);
+}
 
 static void die(const char *msg) {
 	printf("%s\n", msg);
@@ -79,6 +85,13 @@ static void remove_shm() {
 static void close_pipes() {
 	CloseHandle(ctlPipe);
 	CloseHandle(stPipe);
+}
+
+static void kill_dotnet_process() {
+	if (dotnetProcess != INVALID_HANDLE_VALUE) {
+		TerminateProcess(dotnetProcess, 1);
+		CloseHandle(dotnetProcess);
+	}
 }
 
 // Read the flag value from the single command line parameter. For example,
@@ -152,6 +165,10 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
 	unsigned long uniqueIdNum;
 
 	uniqueIdNum = generateRandNum(); // Different instances need to used different pipe names to work
+
+	signal(SIGINT, kill_handler);
+	signal(SIGTERM, kill_handler);
+	signal(SIGABRT, kill_handler);
 	
 	parse_flags(*argc, *argv);
 
@@ -269,8 +286,10 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
 		die_sys("Failed to instantiate C# process.");
 	}
 
-	CloseHandle(processInfo.hProcess); // TODO: use this to check for child process death instead
 	CloseHandle(processInfo.hThread);
+	dotnetProcess = processInfo.hProcess;
+	atexit(kill_dotnet_process);
+	// TODO: use this to check for child process death
 
 	int32_t status;
 	DWORD totalBytesRead = 0;

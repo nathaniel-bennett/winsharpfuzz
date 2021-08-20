@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\build\Common.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>winsharpfuzz-instrument</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <PackageId>WinSharpFuzz.Instrument</PackageId>
+    <Title>WinSharpFuzz.Instrument</Title>
+    <PackageVersion>1.0.0</PackageVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Description>Command-line tool to instrument libraries for WinSharpFuzz</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WinSharpFuzz\WinSharpFuzz.csproj" />
+  </ItemGroup>
+
+</Project>

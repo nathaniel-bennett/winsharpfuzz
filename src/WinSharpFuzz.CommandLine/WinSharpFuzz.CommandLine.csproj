@@ -1,33 +1,35 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\..\build\Common.props" />
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;netcoreapp5.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>sharpfuzz</ToolCommandName>
+    <ToolCommandName>winsharpfuzz</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>WinSharpFuzz.CommandLine</PackageId>
     <Title>WinSharpFuzz.CommandLine</Title>
-    <PackageVersion>1.6.3</PackageVersion>
-    <AssemblyVersion>1.6.3.0</AssemblyVersion>
-    <Description>Command line tool for SharpFuzz instrumentation</Description>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\build\WinSharpFuzz.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <Platforms>AnyCPU;x64</Platforms>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|x64'">
-    <PlatformTarget>x64</PlatformTarget>
+    <PackageVersion>1.0.0</PackageVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Description>Command-line tool to run libFuzzer on WinSharpFuzz project</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WinSharpFuzz\WinSharpFuzz.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include=".\winsharpfuzz-libfuzzer-x64.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include=".\winsharpfuzz-libfuzzer-x86.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup> 
 
 </Project>

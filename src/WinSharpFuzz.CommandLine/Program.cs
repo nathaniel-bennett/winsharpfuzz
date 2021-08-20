@@ -1,112 +1,111 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
+using System.Threading;
+using System.Reflection;
 
 namespace WinSharpFuzz.CommandLine
 {
 	public class Program
 	{
-		private const string Usage = @"Usage: sharpfuzz [path-to-assembly] [prefix ...]
+		private const string Usage = @"Usage: dotnet winsharpfuzz --target_path=[path-to-binary] [args ...]
 
-path-to-assembly:
-  The path to an assembly .dll file to instrument.
+path-to-binary:
+  The path to a WinSharpFuzz test harness executable
 
-prefix:
-  The class or the namespace to instrument.
-  If not present, all types in the assembly will be instrumented.
-  At least one prefix is required when instrumenting System.Private.CoreLib.
+args:
+  Any additional libFuzzer flags or options desired.
+  For libFuzzer flag options, see https://llvm.org/docs/LibFuzzer.html
   
 Examples:
-  sharpfuzz Newtonsoft.Json.dll
-  sharpfuzz System.Private.CoreLib.dll System.Number
-  sharpfuzz System.Private.CoreLib.dll System.DateTimeFormat System.DateTimeParse";
+  dotnet winsharpfuzz --target_path=RegexFuzzer.exe
+  dotnet winsharpfuzz --target_path='C:\Users\TestUser\Code\RegexFuzzer.exe' -jobs=8
+  (note that in both examples, 'RegexFuzzer.exe' should be WinSharpFuzz harness code that calls instrumented libraries)";
 
 		public static int Main(string[] args)
 		{
-			if (args.Length == 0)
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+				Console.WriteLine("WinSharpFuzz is meant for use only in the Windows platform.");
+				Console.WriteLine("To fuzz .NET code in Linux/Unix, see SharpFuzz (www.nuget.org/packages/SharpFuzz)");
+				return 0;
+			}
+
+			if (args.Length == 0 || args[0] == "--help" || args[0] == "-h")
 			{
 				Console.WriteLine(Usage);
 				return 0;
 			}
 
-			string path = args[0];
+			string ExecFilePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-			if (!File.Exists(path))
+			switch (RuntimeInformation.ProcessArchitecture)
+            {
+				case Architecture.X64:
+					ExecFilePath += "\\winsharpfuzz-libfuzzer-x64.exe";
+					break;
+
+				case Architecture.X86:
+					ExecFilePath += "\\winsharpfuzz-libfuzzer-x86.exe";
+					break;
+
+				default:
+					Console.WriteLine("Desired architecture unsupported (x86 or x64 required; ARM currently unsupported).");
+					return 0;
+            }
+
+			Process p = new Process()
 			{
-				Console.Error.WriteLine("Specified file does not exist.");
+				EnableRaisingEvents = true,
+				StartInfo = new ProcessStartInfo
+				{
+					Arguments = String.Join(' ', args),
+					CreateNoWindow = true,
+					FileName = ExecFilePath,
+					RedirectStandardError = true,
+					UseShellExecute = false,
+                },
+			};
+
+			Console.WriteLine("Executing process...");
+
+            if (!p.Start())
+            {
+				Console.WriteLine("Child process unexpectedly failed to start up. Aborting...");
 				return 1;
-			}
+            }
 
-			var isCoreLib = Path.GetFileNameWithoutExtension(path) == "System.Private.CoreLib";
-			var include = new List<string>();
-			var exclude = new List<string>();
-
-			foreach (var arg in args.Skip(1))
+			Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs a) =>
 			{
-				// This feature is necessary for me, but it's not documented on purpose,
-				// because I don't want to complicate things further for the users.
-				if (arg.StartsWith("-"))
-				{
-					exclude.AddRange(arg.Substring(1).Trim().Split(',', StringSplitOptions.RemoveEmptyEntries));
-				}
-				else
-				{
-					include.AddRange(arg.Split(',', StringSplitOptions.RemoveEmptyEntries));
-				}
-			}
+				Console.WriteLine("Interrupt detected--stopping WinSharpFuzz instance");
+				p.Kill(true); // TODO: replace with simpler SIGINT to child
 
-			if (isCoreLib && include.Count == 0)
-			{
-				Console.Error.WriteLine("At least one prefix is required when instrumenting System.Private.CoreLib.");
-				return 1;
-			}
+				p.WaitForExit();
+				p.Close();
+				System.Environment.Exit(0);
+			};
 
-			try
-			{
-				var enableOnBranchCallback = Environment.GetEnvironmentVariable("SHARPFUZZ_ENABLE_ON_BRANCH_CALLBACK") is object;
-				var types = Fuzzer.Instrument(path, Matcher, enableOnBranchCallback);
+			RedirectToConsole(p.StandardError);
 
-				if (Environment.GetEnvironmentVariable("SHARPFUZZ_PRINT_INSTRUMENTED_TYPES") is object)
-				{
-					foreach (var type in types)
-					{
-						Console.WriteLine(type);
-					}
-				}
-			}
-			catch (InstrumentationException ex)
-			{
-				Console.Error.WriteLine(ex.Message);
-				return 1;
-			}
-			catch
-			{
-				Console.Error.WriteLine("Failed to instrument the specified file, most likely because it's not a valid .NET assembly.");
-				return 1;
-			}
+			p.WaitForExit();
+			p.Close();
 
-			bool Matcher(string type)
-			{
-				if (exclude.Any(prefix => type.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
-				{
-					return false;
-				}
-
-				if (include.Count == 0)
-				{
-					return true;
-				}
-
-				if (include.Any(prefix => type.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
-				{
-					return true;
-				}
-
-				return false;
-			}
-
+			Console.WriteLine("WinSharpFuzz process exited.");
 			return 0;
 		}
+
+		private static void RedirectToConsole(StreamReader input)
+        {
+			new Thread(a =>
+			{
+				string line = input.ReadLine();
+				while (line != null)
+                {
+					Console.WriteLine(line);
+					line = input.ReadLine();
+                }
+			}).Start();
+        }
 	}
 }

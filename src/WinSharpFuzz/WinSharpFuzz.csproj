@@ -7,29 +7,19 @@
     <LangVersion>latest</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
     <PackageId>WinSharpFuzz</PackageId>
     <Title>WinSharpFuzz</Title>
-    <PackageVersion>1.6.2</PackageVersion>
-    <AssemblyVersion>1.6.2.0</AssemblyVersion>
-    <Description>libFuzzer-based fuzz testing for Windows .NET</Description>
+    <PackageVersion>1.0.0</PackageVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Description>libFuzzer-based fuzzing for Windows .NET</Description>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\build\WinSharpFuzz.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <Platforms>AnyCPU;x64</Platforms>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PlatformTarget>x64</PlatformTarget>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" /> -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="dnlib" Version="3.3.1" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>

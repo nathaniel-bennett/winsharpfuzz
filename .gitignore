@@ -7,15 +7,19 @@
 [Oo]bj/
 src/WinSharpFuzz/[Bb]in/
 src/WinSharpFuzz/[Oo]bj/
+src/WinSharpFuzz/[Nn]upkg/
 src/WinSharpFuzz.CommandLine/[Bb]in/
 src/WinSharpFuzz.CommandLine/[Oo]bj/
 src/WinSharpFuzz.Common/[Bb]in/
 src/WinSharpFuzz.Common/[Oo]bj/
-libfuzzer-dotnet/libfuzzer-dotnet.dll
-libfuzzer-dotnet/libfuzzer-dotnet.exe
-libfuzzer-dotnet/libfuzzer-dotnet.exp
-libfuzzer-dotnet/libfuzzer-dotnet.lib
-libfuzzer-dotnet/libfuzzer-dotnet.pdb
+src/WinSharpFuzz.Common/[Nn]upkg/
+src/WinSharpFuzz.CommandLine/[Bb]in/
+src/WinSharpFuzz.CommandLine/[Oo]bj/
+src/WinSharpFuzz.CommandLine/[Nn]upkg/
+src/WinSharpFuzz.Instrument/[Bb]in/
+src/WinSharpFuzz.Instrument/[Oo]bj/
+src/WinSharpFuzz.Instrument/[Nn]upkg/
+libfuzzer-dotnet/winsharpfuzz-libfuzzer-*
 
 # BenchmarkDotNet
 **/BenchmarkDotNet.Artifacts/*

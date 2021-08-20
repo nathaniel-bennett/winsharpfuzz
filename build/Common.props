@@ -4,16 +4,14 @@
     <AssemblyOriginatorKeyFile>..\..\build\WinSharpFuzz.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
  
- <!--
   <PropertyGroup>
-    <Authors>Nemanja Mijailovic</Authors>
-    <RepositoryUrl>https://github.com/Metalnem/sharpfuzz.git</RepositoryUrl>
+    <Authors>Nathaniel Bennett</Authors>
+    <RepositoryUrl>https://github.com/nathaniel-bennett/winsharpfuzz.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright © 2018-2019, Nemanja Mijailovic</Copyright>
-    <PackageTags>fuzzing testing fuzz-testing fuzzer afl afl-fuzz libfuzzer</PackageTags>
+    <Copyright>Copyright © 2021, Nathaniel Bennett</Copyright>
+    <PackageTags>fuzzing testing fuzz-testing fuzzer libfuzzer windows</PackageTags>
   </PropertyGroup>
-  -->
 </Project>
