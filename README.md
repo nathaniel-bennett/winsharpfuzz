@@ -1,8 +1,11 @@
 # WinSharpFuzz: Coverage-based Fuzzing for Windows .NET
 
+[![NuGet][nuget-shield]][nuget-link]
 [![Build Status][build-shield]][build-link]
 [![License][license-shield]][license-link]
 
+[nuget-shield]: https://img.shields.io/nuget/v/WinSharpFuzz.svg
+[nuget-link]: https://www.nuget.org/packages/WinSharpFuzz
 [build-shield]: https://ci.appveyor.com/api/projects/status/91tx1501qeev5rwf?svg=true 
 [build-link]: https://ci.appveyor.com/project/nathaniel-bennett/winsharpfuzz
 [license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=flat
