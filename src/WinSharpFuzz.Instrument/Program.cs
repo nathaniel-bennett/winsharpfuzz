@@ -18,9 +18,9 @@ prefix:
   At least one prefix is required when instrumenting System.Private.CoreLib.
   
 Examples:
-  sharpfuzz Newtonsoft.Json.dll
-  sharpfuzz System.Private.CoreLib.dll System.Number
-  sharpfuzz System.Private.CoreLib.dll System.DateTimeFormat System.DateTimeParse";
+  winsharpfuzz-instrument Newtonsoft.Json.dll
+  winsharpfuzz-instrument System.Private.CoreLib.dll System.Number
+  winsharpfuzz-instrument System.Private.CoreLib.dll System.DateTimeFormat System.DateTimeParse";
 
 		public static int Main(string[] args)
 		{
