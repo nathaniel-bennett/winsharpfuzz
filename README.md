@@ -43,24 +43,58 @@ In its current state, the WinSharpFuzz library only supports fuzzing with libFuz
 
 ## Installation
 
-In order to use the WinSharpFuzz library, we must first build its C# code. This is relatively 
-straightforward, and can be accomplished by building the project either in Visual Studio or by 
-using the `dotnet` command in a powershell terminal. If using Visual Studio, open the 
-WinSharpFuzz.sln project (make sure you haven't just opened the folder that the .sln file resides 
-in). Click the 'Build' tab, then select 'Build Solution' (or use the shortcut 'Ctrl+Shift+B''). 
-If using a powershell terminal, simply navigate to the root directory of this project and execute 
-the following command: `dotnet build`. The resulting libraries can be found in 
-`src/WinSharpFuzz/bin/Debug/netstandard2.0/*.dll`.
+#### Using NuGet
 
-In addition to building the necessary WinSharpFuzz libraries we will need, this build process also 
-outputs an executable tool for instrumenting C# libraries so that program control flow can be 
-detected by WinSharpFuzz. This tool can be found in 
-`src/WinSharpFuzz.CommandLine/bin/Debug/netcoreapp5.0/WinSharpFuzz.CommandLine.exe`.
+The easiest way to use this library is by pulling the appropriate tools and assemblies from NuGet. For WinSharpFuzz, 
+there are two tools and one library that we'll use.
 
-Lastly, we need to extract the libFuzzer adapter executable found in 
-`libfuzzer-dotnet/libfuzzer-dotnet-windows.zip`. This can also be built from source if desired; for 
-instructions on how to do so, refer to the README found within the `libfuzzer-dotnet/` subdirectory 
-of this project.
+To install the tools, use the following commands within a PowerShell instance:
+- `dotnet tool install -g WinSharpFuzz.CommandLine`
+- `dotnet tool install -g WinSharpFuzz.Instrument`
+
+These will install everything needed to run the above commands (the -g flag installs them globally). 
+Once installed, these tools can be executed using `dotnet winsharpfuzz [args]` or 
+`dotnet winsharpfuzz-instrument [args]`.
+
+Installing the WinSharpFuzz library assemblies actually happens on a per-project basis, so you'll need 
+to create an instrumenting project before you complete this step. To do so, you can either create an 
+empty C# console project using Visual Studio or else create one in a PowerShell instance using 
+`dotnet new -n <PROJECT_NAME>`.
+
+The way you will go about installing the library will depend on what environment you'll be building the 
+WinSharpFuzz harness code. If you're building the project in Visual Studio, click the 'Project' tab and 
+select 'Manage NuGet Packages...'. Then select the 'Browse' tab, search for WinSharpFuzz and install the 
+library that comes up. If you're building the project using the `dotnet` command-line tool, just use 
+`dotnet add package WinSharpFuzz`.
+
+Congratulations, you now have WinSharpFuzz installed and ready to use!
+
+#### From Source
+
+Alternatively, one can build this project directly from its C# code. This is relatively 
+straightforward, and can be accomplished either in Visual Studio or by using the `dotnet` command 
+in a powershell terminal. We'll assume you've already either downloaded and unzipped the code or 
+cloned this project using `git clone https://github.com/nathaniel-bennett/winsharpfuzz.git`.
+
+If using Visual Studio, navigate to the downloaded code and open the WinSharpFuzz.sln project 
+(make sure you haven't just opened the folder that the .sln file resides in). Click the 'Build' tab, 
+then select 'Build Solution' (or alternatively, just use the shortcut 'Ctrl+Shift+B''). 
+
+If using a powershell terminal, simply navigate to the root directory of the project source code and 
+execute the following command: `dotnet build`. It should indicate that the project build successfully.
+
+The resulting libraries can be found in 
+`src\WinSharpFuzz\bin\Debug\netstandard2.0\WinSharpFuzz.dll` and 
+`src\WinSharpFuzz.Common\bin\Debug\netstandard2.0\WinSharpFuzz.CommandLine.dll`. In addition to building the 
+necessary WinSharpFuzz libraries we will need, this build process also outputs two executable tools: 
+one for instrumenting C# libraries so that program control flow can be 
+detected by WinSharpFuzz, and one for actually running libFuzzer on our project. The instrumentation and 
+libFuzzer tools will be output to `src\WinSharpFuzz.Instrument\bin\Debug\net5.0\WinSharpFuzz.Instrument.exe` and 
+`src\WinSharpFuzz.CommandLine\bin\Debug\net5.0\WinSharpFuzz.CommandLine.exe` respectively.
+
+As an aside, the libFuzzer tool makes use of two precompiled C++ binaries, `winsharpfuzz-libfuzzer-x64.exe` and 
+`winsharpfuzz-libfuzzer-x86.exe`. If you want to build these from source as well, refer to the README found 
+within the `libfuzzer-dotnet\` subdirectory of this project.
 
 ## Usage
 
@@ -69,8 +103,7 @@ The process of fuzzing C# code using this library can be broken down into the fo
 1. Writing a test harness that calls the library functions you want to fuzz
 2. Instrumenting the dll libraries using `WinSharpFuzz.CommandLine.exe`
 3. Building an executable from the test harness + libraries
-4. Running the executable using `libfuzzer-dotnet`
-
+4. Running the executable using the `winsharpfuzz` command (or `WinSharpFuzz.CommandLine.exe` if you've built from source)
 
 We'll go through how to perform each of these steps in order.
 
@@ -176,7 +209,11 @@ a framework that handles the information recorded by the instrumentation.
 
 To instrument a dll file, simply execute the following command:
 
-`WinSharpFuzz.CommandLine.exe \path\to\library.dll`
+`winsharpfuzz-instrument \path\to\library.dll`
+
+Or, if you've built from source:
+
+`WinSharpFuzz.Instrument.exe \path\to\library.dll`
 
 (make sure to execute this within the folder containing `WinSharpFuzz.CommandLine.exe`, and change 
 \path\to\library.dll to the path of the library you want to instrument).
@@ -190,25 +227,35 @@ to the fuzzer.
 
 Once the harness is written up, the next step is to add the necessary libraries and build the 
 project. The `WinSharpFuzz.dll` and `WinSharpFuzz.Common.dll` libraries are both needed in order to 
-include WinSharpFuzz in the project, so make sure to add both of those as references. They can be 
-found in `src/WinSharpFuzz/WinSharpFuzz/bin/Debug/netstandard2.0/*.dll`.
+include WinSharpFuzz in the project, so make sure to add both of those as references. If you used 
+NuGet to install these libraries, then you'll have already added them to your project 
+(see [installation](#installation).
+
+Otherwise, they can be found in `src\WinSharpFuzz\WinSharpFuzz\bin\Debug\netstandard2.0\WinSharpFuzz.dll` 
+and `src\WinSharpFuzz\WinSharpFuzz.Common\bin\Debug\netstandard2.0\WinSharpFuzz.Common.dll`.
 
 TODO: explain how to add libraries both in .csproj and in Visual Studio
 
-Now the harness should be all ready to be built. Just like before, you can build either with 
-Ctrl+Shift+B in Visual studio or by executing `dotnet build` from powershell in the root of the 
+Now the harness should be all ready to be built. You can build by using 
+Ctrl+Shift+B in Visual Studio, or by executing `dotnet build` from powershell in the root of the 
 project. Once the build has finished, find the path to the resulting executable (it's usually 
-something like `bin/x64/Debug/your_project_name.exe`).
+something like `bin\x64\Debug\your_project_name.exe`).
 
 #### Running WinSharpFuzz with LibFuzzer
 
-On its own, libFuzzer is meant for C/C++ projects. However, the code provided in the 
-`libfuzzer-dotnet/` subdirectory bridges the gap between libFuzzer and C# code through the use of 
-pipes and shared memory. From a high level, these allow the libfuzzer-dotnet binary to pass fuzzing 
-inputs to the C# executable, which in turn passes back control flow information to the C++ binary. 
+On its own, libFuzzer is meant for C/C++ projects. However, the code provided in  
+`libfuzzer-dotnet\` and WinSharpFuzz.CommandLine bridges the gap between libFuzzer and C# code 
+through the use of pipes and shared memory. From a high level, these allow the libfuzzer-dotnet 
+binary to pass fuzzing inputs to the C# executable, which in turn passes back control flow 
+information to the C++ binary. 
+
 With this setup, fuzzing can be performed using one simple command:
 
-`libfuzzer-dotnet.exe --target_path="\path\to\HarnessExecutable.exe" "\path\to\corpus"`
+`winsharpfuzz --target_path="\path\to\HarnessExecutable.exe" "\path\to\corpus" [other-libfuzzer-options]`
+
+Or, if you've built from source, use the following:
+
+`.\WinSharpFuzz.CommandLine.exe --target_path="\path\to\HarnessExecutable.exe" "\path\to\corpus" [other-libfuzzer-options]`
 
 `"\path\to\corpus"` is optional; if specified, it is the path of a folder containing example inputs 
 that will be mutated by the fuzzer to provide unique tests. These inputs can be a mixture of valid 
