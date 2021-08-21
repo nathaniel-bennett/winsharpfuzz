@@ -224,6 +224,7 @@ libfuzzer and .NET executables operate.
 
 This library is still a work in progress. Future plans include:
 
-- Adding a build pipeline 
-- Creating a NuGet repository to make installation of the library easier
+- ~~Adding a build pipeline~~ Done!
+- ~~Creating a NuGet repository to make installation of the library easier~~ Done!
+- Automating NuGet version updates
 - Exploring compatability options with WinAFL and other Windows fuzzers
