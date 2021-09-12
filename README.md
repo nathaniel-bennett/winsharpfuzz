@@ -101,7 +101,7 @@ within the `libfuzzer-dotnet\` subdirectory of this project.
 The process of fuzzing C# code using this library can be broken down into the following four steps: 
 
 1. Writing a test harness that calls the library functions you want to fuzz
-2. Instrumenting the dll libraries using `WinSharpFuzz.CommandLine.exe`
+2. Instrumenting the dll libraries using the `winsharpfuzz-instrument` command
 3. Building an executable from the test harness + libraries
 4. Running the executable using the `winsharpfuzz` command (or `WinSharpFuzz.CommandLine.exe` if you've built from source)
 
