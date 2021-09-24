@@ -261,8 +261,20 @@ Or, if you've built from source, use the following:
 that will be mutated by the fuzzer to provide unique tests. These inputs can be a mixture of valid 
 and invalid test cases, but they should not cause the program to crash.
 
-Additional libFuzzer options can be used from this executable, such as specifying the number of 
-consecutive jobs to be run or maximum input size. More information on these options can be found 
+Additional libFuzzer options can be used from this executable, such as specifying the number of jobs to be run (i.e. the number 
+of crashes to be detected before stopping the fuzzer) or the maximum input size:
+
+`.\WinSharpFuzz.CommandLine.exe --target_path="\path\to\HarnessExecutable.exe" "\path\to\corpus" -jobs=8 -max-len=16000`
+
+When running multiple jobs, input will be redirected to several files (usually labelled `fuzz-0.log`, `fuzz-1.log`, ...) 
+that contain status information on each of the jobs being run. No information will be passed to the terminal, so it will give 
+the appearance that it is frozen--this is not the case. The log files are updated in real time to provide information that would 
+normally be passed to the terminal.
+
+The number of jobs that run in parallel is by default set to half of the number of cores available on the computer. 
+This can be overridden by using the `-workers=N` option (where N is the number of jobs you want to run simultaneously).
+ 
+More information on these options can be found 
 [here](https://llvm.org/docs/LibFuzzer.html#options). It should be noted that some of the memory 
 options (such as `-malloc_limit_mb`) will not be useful because of the independant way in which the 
 libfuzzer and .NET executables operate.
